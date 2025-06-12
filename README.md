@@ -1,46 +1,142 @@
-# Getting Started with Create React App
+# Autonomous Streaming Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A decentralized streaming platform built for the Agents in Action hackathon, leveraging Coinbase Developer Products to create secure, programmable streaming services with autonomous payment management.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+### 1. CDP Wallet Integration
+- Secure wallet connection and management
+- Programmable wallet features
+- Automatic network change handling
+- Transaction signing and verification
+- Account state management
 
-### `npm start`
+### 2. x402pay Integration
+- Pay-per-use monetization
+- Automatic payment processing
+- Secure payment distribution
+- Real-time payment verification
+- Creator revenue management
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### 3. AgentKit Integration
+- Autonomous stream management
+- Automatic stream duration control
+- Payment monitoring and verification
+- Network change handling
+- Wallet disconnection management
+- Stream health monitoring
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### 4. Smart Contract Features
+- Movie ownership management
+- Streaming rights control
+- Payment processing
+- Event tracking and logging
+- Secure transaction handling
 
-### `npm test`
+### 5. User Interface
+- Modern, responsive design
+- Real-time feedback
+- Toast notifications
+- Error handling
+- Loading states
+- Movie grid display
+- Streaming interface
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Technical Stack
 
-### `npm run build`
+- **Frontend**: React, TypeScript, ChakraUI
+- **Smart Contracts**: Solidity, OpenZeppelin
+- **Wallet**: CDP Wallet
+- **Payments**: x402pay
+- **Autonomous Agents**: AgentKit
+- **Development**: Hardhat, ethers.js
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Getting Started
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Prerequisites
+- Node.js (v18 or higher)
+- CDP Wallet browser extension
+- MetaMask or compatible Web3 wallet
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Installation
 
-### `npm run eject`
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/autonomous-streaming-platform.git
+cd autonomous-streaming-platform
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+2. Install dependencies:
+```bash
+npm install
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. Create a `.env.local` file in the root directory:
+```
+REACT_APP_STREAMING_CONTRACT_ADDRESS=<your_deployed_contract_address>
+REACT_APP_X402_PAY_ADDRESS=<your_x402pay_contract_address>
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+4. Start the development server:
+```bash
+npm start
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Smart Contract Deployment
 
-## Learn More
+1. Configure your network in `hardhat.config.ts`
+2. Deploy the contract:
+```bash
+npx hardhat run scripts/deploy.ts --network <your-network>
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Usage
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. Connect your CDP Wallet
+2. Browse available movies
+3. Select a movie to stream
+4. Confirm payment through x402pay
+5. Enjoy streaming with automatic payment management
+
+## Autonomous Features
+
+### StreamingAgent
+- Monitors stream health
+- Manages stream duration
+- Handles payment verification
+- Controls stream lifecycle
+- Manages network changes
+
+### Payment Management
+- Automatic payment processing
+- Creator revenue distribution
+- Payment verification
+- Transaction monitoring
+
+### Security
+- Secure wallet integration
+- Transaction signing
+- Payment verification
+- Network security
+- Error handling
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Coinbase Developer Products
+- CDP Wallet
+- x402pay
+- AgentKit
+- OpenZeppelin
+- ChakraUI
