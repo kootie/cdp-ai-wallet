@@ -117,7 +117,7 @@ export class StreamingService {
     }
 
     try {
-      const [creator, ipfsHash, isActive] = await this.contract.movies(movieId);
+      const [creator, ipfsHash] = await this.contract.movies(movieId);
       
       // Get the streaming cost
       const cost = await this.contract.getStreamingCost(movieId);
@@ -158,7 +158,7 @@ export class StreamingService {
     }
 
     try {
-      const [startTime, lastBillingTime, isActive] = await this.contract.userSessions(address, movieId);
+      const [startTime, , isActive] = await this.contract.userSessions(address, movieId);
       return {
         movieId,
         startTime: startTime.toNumber(),
