@@ -2,6 +2,8 @@
 
 A decentralized streaming platform built for the Agents in Action hackathon, leveraging Coinbase Developer Products to create secure, programmable streaming services with autonomous payment management.
 
+[View Technical Documentation](technical.md)
+
 ## Features
 
 ### 1. CDP Wallet Integration
@@ -34,13 +36,12 @@ A decentralized streaming platform built for the Agents in Action hackathon, lev
 - Secure transaction handling
 
 ### 5. User Interface
-- Modern, responsive design
-- Real-time feedback
-- Toast notifications
-- Error handling
-- Loading states
-- Movie grid display
-- Streaming interface
+- Modern, responsive design using ChakraUI
+- Real-time feedback with toast notifications
+- Error handling and loading states
+- Movie grid display with thumbnails
+- YouTube video integration for trailers
+- Streaming interface with autoplay support
 
 ## Technical Stack
 
@@ -50,6 +51,8 @@ A decentralized streaming platform built for the Agents in Action hackathon, lev
 - **Payments**: x402pay
 - **Autonomous Agents**: AgentKit
 - **Development**: Hardhat, ethers.js
+- **Video Integration**: YouTube Embed API
+- **Deployment**: Vercel
 
 ## Getting Started
 
@@ -93,10 +96,26 @@ npx hardhat run scripts/deploy.ts --network <your-network>
 ## Usage
 
 1. Connect your CDP Wallet
-2. Browse available movies
+2. Browse available movies with YouTube trailers
 3. Select a movie to stream
 4. Confirm payment through x402pay
 5. Enjoy streaming with automatic payment management
+
+## Video Integration
+
+### YouTube Integration
+- Embedded YouTube trailers
+- Autoplay support
+- Responsive video player
+- No related videos (clean interface)
+- Automatic quality selection
+
+### Video Features
+- High-quality trailers
+- Smooth playback
+- Mobile-friendly design
+- Automatic aspect ratio
+- Full-screen support
 
 ## Autonomous Features
 
@@ -140,3 +159,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - AgentKit
 - OpenZeppelin
 - ChakraUI
+- YouTube Embed API
