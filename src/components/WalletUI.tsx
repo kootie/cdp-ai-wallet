@@ -4,7 +4,7 @@ import { Button, Text, VStack, Heading, useToast } from '@chakra-ui/react';
 import MovieList from './MovieList';
 
 const WalletUI: React.FC = () => {
-  const { account, provider, connect, disconnect } = useWallet();
+  const { account, connect, disconnect } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
   const toast = useToast();
 
