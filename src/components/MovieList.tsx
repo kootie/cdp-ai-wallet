@@ -103,6 +103,12 @@ const MovieList: React.FC = () => {
 
   const verifyVideoFile = async (url: string): Promise<boolean> => {
     try {
+      // For YouTube embeds, we don't need to verify the file
+      // as YouTube handles the video delivery
+      if (url.includes('youtube.com/embed')) {
+        return true;
+      }
+
       console.log('Verifying video file:', url);
       const response = await fetch(url, { method: 'HEAD' });
       console.log('Video file response:', {
@@ -143,8 +149,8 @@ const MovieList: React.FC = () => {
     }
 
     try {
-      // Verify video file before starting stream
-      const isVideoValid = await verifyVideoFile(movie.thumbnail);
+      // For YouTube videos, we don't need to verify the file
+      const isVideoValid = movie.thumbnail.includes('youtube.com/embed') || await verifyVideoFile(movie.thumbnail);
       if (!isVideoValid) {
         toast({
           title: "Error",
@@ -263,10 +269,11 @@ const MovieList: React.FC = () => {
           <Heading size="md">{selectedMovie.title}</Heading>
           <AspectRatio ratio={16/9}>
             <iframe
-              src={selectedMovie.thumbnail}
+              src={`${selectedMovie.thumbnail}?autoplay=1`}
               title={selectedMovie.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              style={{ border: 0 }}
             />
           </AspectRatio>
           <Button colorScheme="red" onClick={stopStreaming}>
