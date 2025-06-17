@@ -41,7 +41,7 @@ const MovieList: React.FC = () => {
           {
             id: 1,
             title: "The Matrix",
-            thumbnail: "/trailers/The Matrix.mp4",
+            thumbnail: "https://www.youtube.com/embed/vKQi3bBA1y8",
             ipfsHash: "QmSample1",
             creator: "0x123...",
             pricePerHour: "0.01"
@@ -49,7 +49,7 @@ const MovieList: React.FC = () => {
           {
             id: 2,
             title: "Inception",
-            thumbnail: "/trailers/Inception.mp4",
+            thumbnail: "https://www.youtube.com/embed/YoHD9XEInc0",
             ipfsHash: "QmSample2",
             creator: "0x456...",
             pricePerHour: "0.015"
@@ -57,7 +57,7 @@ const MovieList: React.FC = () => {
           {
             id: 3,
             title: "Interstellar",
-            thumbnail: "/trailers/Interstellar.mp4",
+            thumbnail: "https://www.youtube.com/embed/zSWdZVtXT7E",
             ipfsHash: "QmSample3",
             creator: "0x789...",
             pricePerHour: "0.02"
@@ -103,13 +103,22 @@ const MovieList: React.FC = () => {
 
   const verifyVideoFile = async (url: string): Promise<boolean> => {
     try {
+      console.log('Verifying video file:', url);
       const response = await fetch(url, { method: 'HEAD' });
+      console.log('Video file response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      
       if (!response.ok) {
-        console.error('Video file not found:', url);
+        console.error('Video file not found:', url, 'Status:', response.status);
         return false;
       }
       
       const contentType = response.headers.get('content-type');
+      console.log('Content type:', contentType);
+      
       if (!contentType?.includes('video/')) {
         console.error('Invalid content type:', contentType);
         return false;
@@ -249,60 +258,17 @@ const MovieList: React.FC = () => {
 
   if (isStreaming && selectedMovie) {
     return (
-      <Box w="100%" p={4} borderWidth={1} borderRadius="lg">
-        <VStack spacing={4}>
+      <Box>
+        <VStack spacing={4} align="stretch">
           <Heading size="md">{selectedMovie.title}</Heading>
-          <AspectRatio ratio={16/9} w="100%" maxW="800px">
-            <video
-              ref={videoRef}
+          <AspectRatio ratio={16/9}>
+            <iframe
               src={selectedMovie.thumbnail}
-              controls
-              autoPlay
-              style={{ width: '100%', height: '100%' }}
-              onError={(e) => {
-                const video = e.target as HTMLVideoElement;
-                console.error('Video Error:', {
-                  error: video.error,
-                  errorCode: video.error?.code,
-                  errorMessage: video.error?.message,
-                  networkState: video.networkState,
-                  readyState: video.readyState,
-                  src: video.currentSrc
-                });
-                toast({
-                  title: "Video Error",
-                  description: `Error code: ${video.error?.code}, Message: ${video.error?.message}`,
-                  status: "error",
-                  duration: 5000,
-                });
-              }}
-              onLoadedMetadata={(e) => {
-                const video = e.target as HTMLVideoElement;
-                console.log('Video Metadata Loaded:', {
-                  duration: video.duration,
-                  videoWidth: video.videoWidth,
-                  videoHeight: video.videoHeight,
-                  readyState: video.readyState,
-                  networkState: video.networkState
-                });
-              }}
-              onCanPlay={(e) => {
-                console.log('Video can play');
-                const video = e.target as HTMLVideoElement;
-                video.play().catch(error => {
-                  console.error('Playback Error:', error);
-                  toast({
-                    title: "Playback Error",
-                    description: error.message,
-                    status: "error",
-                    duration: 5000,
-                  });
-                });
-              }}
+              title={selectedMovie.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
           </AspectRatio>
-          <Text>Creator: {selectedMovie.creator}</Text>
-          <Text>Price per hour: {selectedMovie.pricePerHour} ETH</Text>
           <Button colorScheme="red" onClick={stopStreaming}>
             Stop Streaming
           </Button>

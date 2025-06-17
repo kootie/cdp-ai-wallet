@@ -126,15 +126,15 @@ export class StreamingService {
       const movieMetadata = {
         1: {
           title: "The Matrix",
-          thumbnail: "/trailers/Matrix.mp4"
+          thumbnail: "https://www.youtube.com/embed/vKQi3bBA1y8"
         },
         2: {
           title: "Inception",
-          thumbnail: "/trailers/Inception.mp4"
+          thumbnail: "https://www.youtube.com/embed/YoHD9XEInc0"
         },
         3: {
           title: "Interstellar",
-          thumbnail: "/trailers/Interstellar.mp4"
+          thumbnail: "https://www.youtube.com/embed/zSWdZVtXT7E"
         }
       };
 
