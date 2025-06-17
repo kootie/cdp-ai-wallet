@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Grid, Heading, Text, Button, VStack, useToast, Alert, AlertIcon, AspectRatio, Image } from '@chakra-ui/react';
 import { useWallet } from '../contexts/WalletContext';
 import { StreamingService, MovieDetails } from '../services/streamingService';
@@ -10,7 +10,6 @@ const MovieList: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingService, setStreamingService] = useState<StreamingService | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const toast = useToast();
 
   // Thumbnail images for the grid view
@@ -189,19 +188,6 @@ const MovieList: React.FC = () => {
         status: "success",
         duration: 5000,
       });
-
-      // Start playing the video
-      if (videoRef.current) {
-        videoRef.current.play().catch(error => {
-          console.error('Error playing video:', error);
-          toast({
-            title: "Warning",
-            description: "Video playback failed, but streaming is active",
-            status: "warning",
-            duration: 5000,
-          });
-        });
-      }
     } catch (error) {
       console.error('Error starting stream:', error);
       let errorMessage = "Failed to start streaming";
@@ -229,12 +215,6 @@ const MovieList: React.FC = () => {
       
       // Notify the streaming agent
       streamingAgent.emit('stream_stopped', { viewer: account });
-      
-      // Stop the video
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
       
       toast({
         title: "Success",
@@ -269,7 +249,7 @@ const MovieList: React.FC = () => {
           <Heading size="md">{selectedMovie.title}</Heading>
           <AspectRatio ratio={16/9}>
             <iframe
-              src={`${selectedMovie.thumbnail}?autoplay=1`}
+              src={`${selectedMovie.thumbnail}?autoplay=1&rel=0`}
               title={selectedMovie.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
