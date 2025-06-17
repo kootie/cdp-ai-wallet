@@ -36,7 +36,7 @@
     }
   ],
   "env": {
-    "REACT_APP_STREAMING_CONTRACT_ADDRESS": "@react_app_streaming_contract_address",
-    "REACT_APP_X402_PAY_ADDRESS": "@react_app_x402_pay_address"
+    "REACT_APP_STREAMING_CONTRACT_ADDRESS": "0x374e1cB7d85f1A9a75614128486497e5155C926b",
+    "REACT_APP_X402_PAY_ADDRESS": "0x41E0Ce187C56cD18fdC1d8be36730F1877705D7F"
   }
 } 

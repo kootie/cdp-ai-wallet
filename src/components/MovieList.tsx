@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Grid, Image, Heading, Text, Button, VStack, useToast, Alert, AlertIcon } from '@chakra-ui/react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, Grid, Heading, Text, Button, VStack, useToast, Alert, AlertIcon, AspectRatio, Image } from '@chakra-ui/react';
 import { useWallet } from '../contexts/WalletContext';
 import { StreamingService, MovieDetails } from '../services/streamingService';
 
@@ -10,7 +10,15 @@ const MovieList: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingService, setStreamingService] = useState<StreamingService | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const toast = useToast();
+
+  // Thumbnail images for the grid view
+  const thumbnails = {
+    "The Matrix": "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg",
+    "Inception": "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg",
+    "Interstellar": "https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg"
+  };
 
   useEffect(() => {
     if (provider) {
@@ -29,12 +37,11 @@ const MovieList: React.FC = () => {
       if (!streamingService) return;
       
       try {
-        // In a real app, this would fetch from your backend
         const sampleMovies = [
           {
             id: 1,
             title: "The Matrix",
-            thumbnail: "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg",
+            thumbnail: "/trailers/The Matrix.mp4",
             ipfsHash: "QmSample1",
             creator: "0x123...",
             pricePerHour: "0.01"
@@ -42,7 +49,7 @@ const MovieList: React.FC = () => {
           {
             id: 2,
             title: "Inception",
-            thumbnail: "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg",
+            thumbnail: "/trailers/Inception.mp4",
             ipfsHash: "QmSample2",
             creator: "0x456...",
             pricePerHour: "0.015"
@@ -50,7 +57,7 @@ const MovieList: React.FC = () => {
           {
             id: 3,
             title: "Interstellar",
-            thumbnail: "https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg",
+            thumbnail: "/trailers/Interstellar.mp4",
             ipfsHash: "QmSample3",
             creator: "0x789...",
             pricePerHour: "0.02"
@@ -71,6 +78,50 @@ const MovieList: React.FC = () => {
     loadMovies();
   }, [streamingService, toast]);
 
+  // Check for active streams when account changes
+  useEffect(() => {
+    const checkActiveStreams = async () => {
+      if (!streamingService || !account) return;
+
+      try {
+        // Check each movie for active streams
+        for (const movie of movies) {
+          const stream = await streamingService.getActiveStream(account, movie.id);
+          if (stream.isActive) {
+            setSelectedMovie(movie);
+            setIsStreaming(true);
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking active streams:', error);
+      }
+    };
+
+    checkActiveStreams();
+  }, [account, streamingService, movies]);
+
+  const verifyVideoFile = async (url: string): Promise<boolean> => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if (!response.ok) {
+        console.error('Video file not found:', url);
+        return false;
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('video/')) {
+        console.error('Invalid content type:', contentType);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error verifying video file:', error);
+      return false;
+    }
+  };
+
   const startStreaming = async (movie: MovieDetails) => {
     if (!streamingService || !account || !streamingAgent) {
       toast({
@@ -83,6 +134,33 @@ const MovieList: React.FC = () => {
     }
 
     try {
+      // Verify video file before starting stream
+      const isVideoValid = await verifyVideoFile(movie.thumbnail);
+      if (!isVideoValid) {
+        toast({
+          title: "Error",
+          description: "Video file is not accessible or invalid",
+          status: "error",
+          duration: 5000,
+        });
+        return;
+      }
+
+      // Check if user is already streaming any movie
+      for (const m of movies) {
+        const stream = await streamingService.getActiveStream(account, m.id);
+        if (stream.isActive) {
+          toast({
+            title: "Error",
+            description: "You are already streaming a movie. Please stop the current stream first.",
+            status: "error",
+            duration: 5000,
+          });
+          return;
+        }
+      }
+
+      console.log('Starting stream for movie:', movie);
       await streamingService.startStreaming(movie.id);
       setSelectedMovie(movie);
       setIsStreaming(true);
@@ -96,11 +174,30 @@ const MovieList: React.FC = () => {
         status: "success",
         duration: 5000,
       });
+
+      // Start playing the video
+      if (videoRef.current) {
+        videoRef.current.play().catch(error => {
+          console.error('Error playing video:', error);
+          toast({
+            title: "Warning",
+            description: "Video playback failed, but streaming is active",
+            status: "warning",
+            duration: 5000,
+          });
+        });
+      }
     } catch (error) {
       console.error('Error starting stream:', error);
+      let errorMessage = "Failed to start streaming";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to start streaming",
+        description: errorMessage,
         status: "error",
         duration: 5000,
       });
@@ -108,15 +205,21 @@ const MovieList: React.FC = () => {
   };
 
   const stopStreaming = async () => {
-    if (!streamingService || !account || !streamingAgent) return;
+    if (!streamingService || !account || !streamingAgent || !selectedMovie) return;
 
     try {
-      await streamingService.stopStreaming();
+      await streamingService.stopStreaming(selectedMovie.id);
       setIsStreaming(false);
       setSelectedMovie(null);
       
       // Notify the streaming agent
       streamingAgent.emit('stream_stopped', { viewer: account });
+      
+      // Stop the video
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
       
       toast({
         title: "Success",
@@ -149,12 +252,55 @@ const MovieList: React.FC = () => {
       <Box w="100%" p={4} borderWidth={1} borderRadius="lg">
         <VStack spacing={4}>
           <Heading size="md">{selectedMovie.title}</Heading>
-          <Image 
-            src={selectedMovie.thumbnail} 
-            alt={selectedMovie.title}
-            maxH="400px"
-            objectFit="contain"
-          />
+          <AspectRatio ratio={16/9} w="100%" maxW="800px">
+            <video
+              ref={videoRef}
+              src={selectedMovie.thumbnail}
+              controls
+              autoPlay
+              style={{ width: '100%', height: '100%' }}
+              onError={(e) => {
+                const video = e.target as HTMLVideoElement;
+                console.error('Video Error:', {
+                  error: video.error,
+                  errorCode: video.error?.code,
+                  errorMessage: video.error?.message,
+                  networkState: video.networkState,
+                  readyState: video.readyState,
+                  src: video.currentSrc
+                });
+                toast({
+                  title: "Video Error",
+                  description: `Error code: ${video.error?.code}, Message: ${video.error?.message}`,
+                  status: "error",
+                  duration: 5000,
+                });
+              }}
+              onLoadedMetadata={(e) => {
+                const video = e.target as HTMLVideoElement;
+                console.log('Video Metadata Loaded:', {
+                  duration: video.duration,
+                  videoWidth: video.videoWidth,
+                  videoHeight: video.videoHeight,
+                  readyState: video.readyState,
+                  networkState: video.networkState
+                });
+              }}
+              onCanPlay={(e) => {
+                console.log('Video can play');
+                const video = e.target as HTMLVideoElement;
+                video.play().catch(error => {
+                  console.error('Playback Error:', error);
+                  toast({
+                    title: "Playback Error",
+                    description: error.message,
+                    status: "error",
+                    duration: 5000,
+                  });
+                });
+              }}
+            />
+          </AspectRatio>
           <Text>Creator: {selectedMovie.creator}</Text>
           <Text>Price per hour: {selectedMovie.pricePerHour} ETH</Text>
           <Button colorScheme="red" onClick={stopStreaming}>
@@ -174,7 +320,13 @@ const MovieList: React.FC = () => {
           borderRadius="lg"
           overflow="hidden"
         >
-          <Image src={movie.thumbnail} alt={movie.title} />
+          <AspectRatio ratio={16/9}>
+            <Image
+              src={thumbnails[movie.title as keyof typeof thumbnails]}
+              alt={movie.title}
+              objectFit="cover"
+            />
+          </AspectRatio>
           <Box p={4}>
             <Heading size="md">{movie.title}</Heading>
             <Text mt={2}>Creator: {movie.creator}</Text>

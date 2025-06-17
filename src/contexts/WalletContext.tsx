@@ -1,92 +1,97 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { Web3Provider } from '@ethersproject/providers';
-import { StreamingAgent } from '../agents/StreamingAgent';
+import { EventEmitter } from 'events';
+
+// Add type declarations for window.ethereum
+declare global {
+  interface Window {
+    ethereum?: any;
+    coinbaseWalletExtension?: any;
+  }
+}
 
 interface WalletContextType {
   account: string | null;
-  provider: Web3Provider | null;
+  provider: ethers.providers.Web3Provider | null;
   connect: () => Promise<void>;
   disconnect: () => void;
-  isConnecting: boolean;
-  streamingAgent: StreamingAgent | null;
+  streamingAgent: EventEmitter;
 }
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
+const WalletContext = createContext<WalletContextType>({
+  account: null,
+  provider: null,
+  connect: async () => {},
+  disconnect: () => {},
+  streamingAgent: new EventEmitter()
+});
 
-export const useWallet = () => {
-  const context = useContext(WalletContext);
-  if (context === undefined) {
-    throw new Error('useWallet must be used within a WalletProvider');
-  }
-  return context;
-};
+export const useWallet = () => useContext(WalletContext);
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [account, setAccount] = useState<string | null>(null);
-  const [provider, setProvider] = useState<Web3Provider | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [streamingAgent, setStreamingAgent] = useState<StreamingAgent | null>(null);
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
+  const [streamingAgent] = useState<EventEmitter>(new EventEmitter());
+
+  const getEthereumProvider = useCallback(() => {
+    // Try to get the provider from window.ethereum
+    if (typeof window !== 'undefined' && window.ethereum) {
+      return window.ethereum;
+    }
+    return null;
+  }, []);
 
   const connect = async () => {
-    if (typeof window.ethereum === 'undefined') {
-      alert('Please install CDP Wallet to use this application');
-      return;
-    }
-
     try {
-      setIsConnecting(true);
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send('eth_requestAccounts', []);
-      const signer = provider.getSigner();
-      const account = await signer.getAddress();
-      
-      setProvider(provider);
-      setAccount(account);
+      const ethereum = getEthereumProvider();
+      if (!ethereum) {
+        throw new Error('No Ethereum provider found');
+      }
 
-      // Initialize streaming agent
-      const agent = new StreamingAgent(provider);
-      await agent.initialize();
-      await agent.monitorStreams();
-      setStreamingAgent(agent);
+      // Request account access
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      const web3Provider = new ethers.providers.Web3Provider(ethereum);
+      
+      setAccount(accounts[0]);
+      setProvider(web3Provider);
+
+      // Set up event listeners
+      ethereum.on('accountsChanged', (newAccounts: string[]) => {
+        setAccount(newAccounts[0] || null);
+      });
+
+      ethereum.on('chainChanged', () => {
+        window.location.reload();
+      });
+
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      alert('Failed to connect wallet');
-    } finally {
-      setIsConnecting(false);
+      throw error;
     }
   };
 
   const disconnect = () => {
-    if (streamingAgent) {
-      streamingAgent.handleWalletDisconnect();
-    }
     setAccount(null);
     setProvider(null);
-    setStreamingAgent(null);
   };
 
   useEffect(() => {
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
-        if (accounts.length === 0) {
-          disconnect();
-        } else {
-          setAccount(accounts[0]);
-        }
-      });
-
-      window.ethereum.on('chainChanged', (chainId: string) => {
-        if (streamingAgent) {
-          streamingAgent.handleNetworkChange(parseInt(chainId));
-        }
-        window.location.reload();
-      });
+    const ethereum = getEthereumProvider();
+    if (ethereum) {
+      // Check if already connected
+      ethereum.request({ method: 'eth_accounts' })
+        .then((accounts: string[]) => {
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+            setProvider(new ethers.providers.Web3Provider(ethereum));
+          }
+        })
+        .catch(console.error);
     }
-  }, [streamingAgent]);
+  }, [getEthereumProvider]);
 
   return (
-    <WalletContext.Provider value={{ account, provider, connect, disconnect, isConnecting, streamingAgent }}>
+    <WalletContext.Provider value={{ account, provider, connect, disconnect, streamingAgent }}>
       {children}
     </WalletContext.Provider>
   );
