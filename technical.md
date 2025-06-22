@@ -59,10 +59,13 @@ Key Features:
 - Controls stream lifecycle
 
 #### MovieList
-- Displays available movies
+- Displays available movies with YouTube trailers
 - Manages streaming sessions
 - Handles user interactions
 - Provides real-time feedback
+- YouTube iframe integration
+- Autoplay support
+- Responsive video player
 
 ### 3. Services
 
@@ -72,6 +75,8 @@ class StreamingService {
     async startStream(movieId: number): Promise<void>
     async stopStream(movieId: number): Promise<void>
     async processPayment(amount: number): Promise<void>
+    async getMovieDetails(movieId: number): Promise<MovieDetails>
+    async getActiveStream(address: string, movieId: number): Promise<StreamSession>
 }
 ```
 
@@ -81,6 +86,57 @@ class PaymentService {
     async verifyPayment(txHash: string): Promise<boolean>
     async distributeRevenue(amount: number): Promise<void>
 }
+```
+
+## Video Integration
+
+### 1. YouTube Embed Implementation
+```typescript
+// MovieList.tsx
+const MovieList: React.FC = () => {
+  // ... other code ...
+
+  if (isStreaming && selectedMovie) {
+    return (
+      <Box>
+        <VStack spacing={4} align="stretch">
+          <Heading size="md">{selectedMovie.title}</Heading>
+          <AspectRatio ratio={16/9}>
+            <iframe
+              src={`${selectedMovie.thumbnail}?autoplay=1&rel=0`}
+              title={selectedMovie.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ border: 0 }}
+            />
+          </AspectRatio>
+          <Button colorScheme="red" onClick={stopStreaming}>
+            Stop Streaming
+          </Button>
+        </VStack>
+      </Box>
+    );
+  }
+};
+```
+
+### 2. Video Features
+- YouTube embed URLs for trailers
+- Autoplay support
+- No related videos (rel=0)
+- Responsive design
+- Full-screen support
+- Mobile-friendly
+
+### 3. Video Verification
+```typescript
+const verifyVideoFile = async (url: string): Promise<boolean> => {
+  // Skip verification for YouTube embeds
+  if (url.includes('youtube.com/embed')) {
+    return true;
+  }
+  // ... verification logic for other video types
+};
 ```
 
 ## Integration Points
@@ -145,6 +201,7 @@ agent.on('streamStopped', handleStreamStop);
 - Transaction signing validation
 - Payment verification
 - Error handling
+- YouTube embed security settings
 
 ### 3. Agent Security
 - State validation
@@ -168,7 +225,11 @@ REACT_APP_X402_PAY_ADDRESS=<address>
         "@coinbase/cdp-wallet": "latest",
         "x402pay": "latest",
         "ethers": "^5.7.0",
-        "react": "^18.2.0"
+        "react": "^18.2.0",
+        "@chakra-ui/react": "^2.8.2",
+        "@emotion/react": "^11.11.3",
+        "@emotion/styled": "^11.11.0",
+        "framer-motion": "^11.0.3"
     }
 }
 ```
@@ -225,18 +286,21 @@ vercel
 - Payment processing events
 - Error events
 - Network change events
+- Video playback events
 
 ### 2. Performance Monitoring
 - Stream health metrics
 - Payment processing times
 - Transaction success rates
 - Network latency
+- Video loading times
 
 ### 3. Error Handling
 - Transaction failures
 - Network issues
 - Payment processing errors
 - Agent state errors
+- Video playback errors
 
 ## Future Technical Improvements
 
@@ -245,12 +309,14 @@ vercel
 - Batch processing
 - Caching implementation
 - Load balancing
+- Video CDN optimization
 
 ### 2. Performance
 - Optimized contract calls
-- Reduced gas costs
-- Improved frontend performance
-- Enhanced agent efficiency
+- Video preloading
+- Lazy loading
+- Performance monitoring
+- Error tracking
 
 ### 3. Security
 - Additional security audits

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Grid, Heading, Text, Button, VStack, useToast, Alert, AlertIcon, AspectRatio, Image } from '@chakra-ui/react';
 import { useWallet } from '../contexts/WalletContext';
 import { StreamingService, MovieDetails } from '../services/streamingService';
+import { ethers } from 'ethers';
 
 const MovieList: React.FC = () => {
   const { provider, account, streamingAgent } = useWallet();
@@ -167,6 +168,35 @@ const MovieList: React.FC = () => {
           toast({
             title: "Error",
             description: "You are already streaming a movie. Please stop the current stream first.",
+            status: "error",
+            duration: 5000,
+          });
+          return;
+        }
+      }
+
+      // Check USDC allowance
+      const cost = ethers.utils.parseUnits(movie.pricePerHour, 6); // 6 decimals for USDC
+      const allowance = await streamingService.getAllowance(account);
+      if (allowance.lt(cost)) {
+        toast({
+          title: "Approval Needed",
+          description: `Approving ${movie.pricePerHour} USDC for streaming...`,
+          status: "info",
+          duration: 5000,
+        });
+        try {
+          await streamingService.approve(cost);
+          toast({
+            title: "Approval Successful",
+            description: `Approved ${movie.pricePerHour} USDC for streaming`,
+            status: "success",
+            duration: 5000,
+          });
+        } catch (approveError) {
+          toast({
+            title: "Approval Failed",
+            description: approveError instanceof Error ? approveError.message : "Failed to approve USDC",
             status: "error",
             duration: 5000,
           });

@@ -13,6 +13,7 @@ export interface MovieDetails {
 export class StreamingService {
   private provider: Web3Provider;
   private contract: ethers.Contract | null = null;
+  private usdc: ethers.Contract | null = null;
 
   constructor(provider: Web3Provider) {
     this.provider = provider;
@@ -21,10 +22,14 @@ export class StreamingService {
 
   private initializeContract() {
     const contractAddress = process.env.REACT_APP_STREAMING_CONTRACT_ADDRESS;
+    const usdcAddress = process.env.REACT_APP_USDC_ADDRESS;
     console.log('Contract address:', contractAddress);
     
     if (!contractAddress) {
       throw new Error('REACT_APP_STREAMING_CONTRACT_ADDRESS is not defined in environment variables');
+    }
+    if (!usdcAddress) {
+      throw new Error('REACT_APP_USDC_ADDRESS is not defined in environment variables');
     }
 
     // Contract ABI matching the StreamingPayment contract
@@ -39,12 +44,19 @@ export class StreamingService {
       "event PaymentProcessed(address indexed user, address indexed creator, uint256 amount, uint256 platformFee)"
     ];
 
+    // ERC20 ABI (only allowance and approve needed)
+    const erc20ABI = [
+      "function allowance(address owner, address spender) view returns (uint256)",
+      "function approve(address spender, uint256 amount) returns (bool)"
+    ];
+
     try {
       this.contract = new ethers.Contract(
         contractAddress,
         contractABI,
         this.provider.getSigner()
       );
+      this.usdc = new ethers.Contract(usdcAddress, erc20ABI, this.provider.getSigner());
       console.log('Contract initialized successfully');
     } catch (error) {
       console.error('Error initializing contract:', error);
@@ -168,5 +180,18 @@ export class StreamingService {
       console.error('Error getting active stream:', error);
       throw error;
     }
+  }
+
+  async getAllowance(account: string): Promise<ethers.BigNumber> {
+    if (!this.usdc) throw new Error('USDC contract not initialized');
+    const contractAddress = process.env.REACT_APP_STREAMING_CONTRACT_ADDRESS;
+    return await this.usdc.allowance(account, contractAddress);
+  }
+
+  async approve(amount: ethers.BigNumberish): Promise<void> {
+    if (!this.usdc) throw new Error('USDC contract not initialized');
+    const contractAddress = process.env.REACT_APP_STREAMING_CONTRACT_ADDRESS;
+    const tx = await this.usdc.approve(contractAddress, amount);
+    await tx.wait();
   }
 } 
